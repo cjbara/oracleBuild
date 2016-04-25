@@ -14,11 +14,11 @@ is
         select * from
           (select m.receiver_id userid, m.sender_id otherid, m.message_id
           from messages m
-          where m.receiver_id = 1)
+          where m.receiver_id = id1)
          union
           (select m.sender_id userid, m.receiver_id otherid, m.message_id
           from messages m
-          where m.sender_id = 1)
+          where m.sender_id = id1)
          )
          group by otherid
         )

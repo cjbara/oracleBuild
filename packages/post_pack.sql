@@ -11,6 +11,9 @@ is
   procedure update_sold(id posts.post_id%type, s posts.sold%type);
 
   procedure get_all_posts(posts OUT sys_refcursor);
+  procedure get_all_posts_query(posts OUT sys_refcursor, query IN posts.description%type);
+  procedure get_all_posts_category(posts OUT sys_refcursor, cat IN categories.category%type);
+  procedure get_all_posts_query_category(posts OUT sys_refcursor, query IN posts.description%type, cat IN categories.category%type);
   procedure get_posts_by_user(posts OUT sys_refcursor, userid IN posts.user_id%type);
 
   procedure get_post_info(id IN posts.post_id%type, info OUT sys_refcursor);

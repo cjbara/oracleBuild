@@ -76,22 +76,51 @@ is
   procedure get_all_posts(posts OUT sys_refcursor)
   is begin 
     open posts for 
-    select a.post_id, fname ||' '|| lname name, title, description, price, numComments, timestamp, category, orbestoffer best, location, free
-    from (
-      select p.post_id, count(comment_id) numComments
-      from posts p, comments c
-      where p.post_id = c.post_id
-      group by p.post_id
-    ) a, posts p, users u, categories
+    select p.post_id, fname ||' '|| lname name, title, description, price, timestamp, category, orbestoffer best, location, free
+    from posts p, users u, categories
     where p.user_id = u.user_id
     and p.category_id = categories.category_id
-    order by timestamp;
+    order by timestamp desc;
+  end;
+
+  procedure get_all_posts_query(posts OUT sys_refcursor, query IN posts.description%type)
+  is begin 
+    open posts for 
+    select p.post_id, fname ||' '|| lname name, title, description, price, timestamp, category, orbestoffer best, location, free
+    from posts p, users u, categories
+    where p.user_id = u.user_id
+    and p.category_id = categories.category_id
+    and (p.title like '%'||query||'%' or p.description like '%'||query||'%')
+    order by timestamp desc;
+  end;
+
+  procedure get_all_posts_category(posts OUT sys_refcursor, cat IN categories.category%type)
+  is begin 
+    open posts for 
+    select p.post_id, fname ||' '|| lname name, title, description, price, timestamp, category, orbestoffer best, location, free
+    from posts p, users u, categories
+    where p.user_id = u.user_id
+    and p.category_id = categories.category_id
+    and categories.category like '%'||cat||'%'
+    order by timestamp desc;
+  end;
+
+  procedure get_all_posts_query_category(posts OUT sys_refcursor, query IN posts.description%type, cat IN categories.category%type)
+  is begin 
+    open posts for 
+    select p.post_id, fname ||' '|| lname name, title, description, price, timestamp, category, orbestoffer best, location, free
+    from posts p, users u, categories
+    where p.user_id = u.user_id
+    and p.category_id = categories.category_id
+    and categories.category like '%'||cat||'%'
+    and (p.title like '%'||query||'%' or p.description like '%'||query||'%')
+    order by timestamp desc;
   end;
 
   procedure get_posts_by_user(posts OUT sys_refcursor, userid IN posts.user_id%type)
   is begin 
     open posts for 
-    select a.post_id, fname ||' '|| lname name, title, description, price, numComments, timestamp, category, orbestoffer best, location, free
+    select p.post_id, fname ||' '|| lname name, title, description, price, numComments, timestamp, category, orbestoffer best, location, free
     from (
       select p.post_id, count(comment_id) numComments
       from posts p, comments c
@@ -108,7 +137,7 @@ is
   procedure get_post_info(id IN posts.post_id%type, info OUT sys_refcursor)
   is begin
     open info for
-    select post_id, fname ||' '|| lname name, title, description, price,
+    select post_id, p.user_id, fname ||' '|| lname name, title, description, price,
     timestamp post_time, category, orbestoffer best, location, free
     from posts p, users u, categories
     where p.user_id = u.user_id
