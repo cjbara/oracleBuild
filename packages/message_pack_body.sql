@@ -3,9 +3,9 @@ is
   procedure get_message_conversation(messages OUT sys_refcursor, id1 IN messages.sender_id%type)
   is begin
     open messages for
-    select sender, u.fname||' '||u.lname as receiver, a.sender_id, a.receiver_id, a.text, a.timestamp
+    select sender, u.fname||' '||u.lname as receiver, a.sender_id, a.receiver_id, a.text, TO_CHAR(a.timestamp, 'DAYMON DD')||' at '||TO_CHAR(a.timestamp, 'HH:MI PM') timestamp, a.read
     from
-      (select u.fname||' '||u.lname as sender, a.sender_id, a.receiver_id, a.text, a.timestamp
+      (select u.fname||' '||u.lname as sender, a.sender_id, a.receiver_id, a.text, a.timestamp, a.read
       from 
         (
         select * from messages
@@ -38,26 +38,28 @@ is
     id := message_id_seq.currval;
   end;
 
-  procedure mark_message(id messages.message_id%type, seen messages.read%type)
+  procedure mark_conversation_as_read(viewer messages.sender_id%type, other messages.sender_id%type)
   is begin
     update messages
-    set read = seen
-    where message_id = id;
+    set read = 1
+    where receiver_id = viewer
+    and sender_id = other;
   end;
 
   procedure get_messages_between_users(messages OUT sys_refcursor, id1 IN messages.sender_id%type, id2 IN messages.sender_id%type)
   is begin
+    message_pack.mark_conversation_as_read(id2, id1);
     open messages for
-    select sender, u.fname||' '||u.lname as receiver, a.text, a.timestamp
+    select sender, u.fname||' '||u.lname as receiver, a.text, TO_CHAR(a.timestamp, 'DAYMON DD')||' at '||TO_CHAR(a.timestamp, 'HH:MI PM') timestamp, a.read
     from
-      (select u.fname||' '||u.lname as sender, a.receiver_id, a.text, a.timestamp
+      (select u.fname||' '||u.lname as sender, a.receiver_id, a.text, a.timestamp, a.read
       from
         (select * from
-          (select m.sender_id, m.receiver_id, m.text, m.timestamp
+          (select m.sender_id, m.receiver_id, m.text, m.timestamp, m.read
           from messages m
           where m.sender_id = id1 and m.receiver_id = id2)
          union
-          (select m.sender_id, m.receiver_id, m.text, m.timestamp
+          (select m.sender_id, m.receiver_id, m.text, m.timestamp, m.read
           from messages m
           where m.sender_id = id2 and m.receiver_id = id1)
         ) a,

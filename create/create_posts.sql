@@ -16,7 +16,7 @@ create table posts (
 	foreign key (category_id) references categories(category_id));
 
 drop sequence post_id_seq;
-create sequence post_id_seq;
+create sequence post_id_seq start with 0 minvalue 0;
 
 create or replace trigger post_id_trig
 before insert on posts

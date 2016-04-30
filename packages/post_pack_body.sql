@@ -72,73 +72,83 @@ is
     where post_id = id;
   end;
 
+  procedure update_post(id IN posts.post_id%type, userid IN posts.user_id%type, price IN posts.price%type, obo IN posts.orbestoffer%type, title IN posts.title%type, descr IN posts.description%type, category IN posts.category_id%type, loc IN posts.location%type, sold IN posts.sold%type)
+  is begin
+    post_pack.update_price(id, price);
+    post_pack.update_obo(id, obo);
+    post_pack.update_title(id, title);
+    post_pack.update_desc(id, descr);
+    post_pack.update_category(id, category);
+    post_pack.update_location(id, loc);
+    post_pack.update_sold(id, sold);
+  end;
+
 --==returns a cursor to the query
   procedure get_all_posts(posts OUT sys_refcursor)
   is begin 
     open posts for 
-    select p.post_id, fname ||' '|| lname name, title, description, price, timestamp, category, orbestoffer best, location, free
+    select p.post_id, p.user_id, fname ||' '|| lname name, title, description, price, TO_CHAR(timestamp, 'DAYMON DD')||' at '||TO_CHAR(timestamp, 'HH:MI PM') timestamp, category, orbestoffer best, location, free, sold
     from posts p, users u, categories
     where p.user_id = u.user_id
     and p.category_id = categories.category_id
+    and p.post_id > 0
     order by timestamp desc;
   end;
 
   procedure get_all_posts_query(posts OUT sys_refcursor, query IN posts.description%type)
   is begin 
     open posts for 
-    select p.post_id, fname ||' '|| lname name, title, description, price, timestamp, category, orbestoffer best, location, free
+    select p.post_id, p.user_id, fname ||' '|| lname name, title, description, price, TO_CHAR(timestamp, 'DAYMON DD')||' at '||TO_CHAR(timestamp, 'HH:MI PM') timestamp, category, orbestoffer best, location, free, sold
     from posts p, users u, categories
     where p.user_id = u.user_id
     and p.category_id = categories.category_id
-    and (p.title like '%'||query||'%' or p.description like '%'||query||'%')
+    and (REGEXP_LIKE(p.title, query, 'i') or REGEXP_LIKE(p.description, query, 'i'))
+    and p.post_id > 0
     order by timestamp desc;
   end;
 
   procedure get_all_posts_category(posts OUT sys_refcursor, cat IN categories.category%type)
   is begin 
     open posts for 
-    select p.post_id, fname ||' '|| lname name, title, description, price, timestamp, category, orbestoffer best, location, free
+    select p.post_id, p.user_id, fname ||' '|| lname name, title, description, price, TO_CHAR(timestamp, 'DAYMON DD')||' at '||TO_CHAR(timestamp, 'HH:MI PM') timestamp, category, orbestoffer best, location, free, sold
     from posts p, users u, categories
     where p.user_id = u.user_id
     and p.category_id = categories.category_id
-    and categories.category like '%'||cat||'%'
+    and REGEXP_LIKE(categories.category, cat, 'i')
+    and p.post_id > 0
     order by timestamp desc;
   end;
 
   procedure get_all_posts_query_category(posts OUT sys_refcursor, query IN posts.description%type, cat IN categories.category%type)
   is begin 
     open posts for 
-    select p.post_id, fname ||' '|| lname name, title, description, price, timestamp, category, orbestoffer best, location, free
+    select p.post_id, p.user_id, fname ||' '|| lname name, title, description, price, TO_CHAR(timestamp, 'DAYMON DD')||' at '||TO_CHAR(timestamp, 'HH:MI PM') timestamp, category, orbestoffer best, location, free, sold
     from posts p, users u, categories
     where p.user_id = u.user_id
     and p.category_id = categories.category_id
-    and categories.category like '%'||cat||'%'
-    and (p.title like '%'||query||'%' or p.description like '%'||query||'%')
+    and REGEXP_LIKE(categories.category, cat, 'i')
+    and (REGEXP_LIKE(p.title, query, 'i') or REGEXP_LIKE(p.description, query, 'i'))
+    and p.post_id > 0
     order by timestamp desc;
   end;
 
   procedure get_posts_by_user(posts OUT sys_refcursor, userid IN posts.user_id%type)
   is begin 
     open posts for 
-    select p.post_id, fname ||' '|| lname name, title, description, price, numComments, timestamp, category, orbestoffer best, location, free
-    from (
-      select p.post_id, count(comment_id) numComments
-      from posts p, comments c
-      where p.post_id = c.post_id
-      and p.user_id = userid
-      group by p.post_id
-    ) a, posts p, users u, categories
+    select p.post_id, fname ||' '|| lname name, title, description, price, TO_CHAR(timestamp, 'DAYMON DD')||' at '||TO_CHAR(timestamp, 'HH:MI PM') timestamp, category, orbestoffer best, location, free, p.user_id
+    from posts p, users u, categories
     where p.user_id = u.user_id
+    and p.user_id = userid
     and p.category_id = categories.category_id
-    order by timestamp;
+    and p.post_id > 0
+    order by timestamp desc;
   end;
 
 --=== Gets the information for a post by ID ===
   procedure get_post_info(id IN posts.post_id%type, info OUT sys_refcursor)
   is begin
     open info for
-    select post_id, p.user_id, fname ||' '|| lname name, title, description, price,
-    timestamp post_time, category, orbestoffer best, location, free
+    select post_id, p.user_id, fname ||' '|| lname name, title, description, price, TO_CHAR(timestamp, 'DAYMON DD')||' at '||TO_CHAR(timestamp, 'HH:MI PM') post_time, category, orbestoffer best, location, free, sold
     from posts p, users u, categories
     where p.user_id = u.user_id
     and p.category_id = categories.category_id
@@ -149,7 +159,15 @@ is
 --=== Deletes a post when the right user tries to delete it ===
   procedure delete_post(id posts.post_id%type, userid posts.user_id%type)
   is begin
-    delete from posts
+    delete from images
+    where post_id = id
+    and userid in (select user_id from posts where post_id = id);
+    
+    delete from comments
+    where post_id = id
+    and user_id = userid;
+    
+    delete from posts 
     where post_id = id
     and user_id = userid;
   end;

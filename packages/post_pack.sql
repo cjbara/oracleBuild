@@ -9,6 +9,7 @@ is
   procedure update_category(id posts.post_id%type, category posts.category_id%type);
   procedure update_location(id posts.post_id%type, loc posts.location%type);
   procedure update_sold(id posts.post_id%type, s posts.sold%type);
+  procedure update_post(id IN posts.post_id%type, userid IN posts.user_id%type, price IN posts.price%type, obo IN posts.orbestoffer%type, title IN posts.title%type, descr IN posts.description%type, category IN posts.category_id%type, loc IN posts.location%type, sold IN posts.sold%type);
 
   procedure get_all_posts(posts OUT sys_refcursor);
   procedure get_all_posts_query(posts OUT sys_refcursor, query IN posts.description%type);

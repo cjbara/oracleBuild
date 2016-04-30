@@ -13,3 +13,6 @@ prompt *** Creating package MESSAGE_PACK ***
 prompt *** Creating package CATEGORY_PACK ***
 @category_pack
 @category_pack_body
+prompt *** Creating package IMAGE_PACK ***
+@image_pack
+@image_pack_body
