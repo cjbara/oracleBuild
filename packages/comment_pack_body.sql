@@ -24,7 +24,7 @@ is
   procedure comments_for_post(postid IN comments.post_id%type, comments OUT sys_refcursor)
   is begin
     open comments for
-    select u.fname || ' ' || u.lname name, c.text, timestamp comment_time, anonymous a
+    select u.fname || ' ' || u.lname name, c.text, TO_CHAR(timestamp, 'DAYMON DD')||' at '||TO_CHAR(timestamp, 'HH:MI PM') comment_time, anonymous a
     from comments c, users u
     where c.post_id = postid
     and c.user_id = u.user_id;
